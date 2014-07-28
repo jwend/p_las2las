@@ -65,17 +65,57 @@ LASwriter* LASwriteOpener::open(LASheader* header)
   }
   else if (file_name)
   {
-    if (format <= LAS_TOOLS_FORMAT_LAZ)
-    {
-      LASwriterLAS* laswriterlas = new LASwriterLAS();
-      if (!laswriterlas->open(file_name, header, (format == LAS_TOOLS_FORMAT_LAZ ? (use_chunking ? LASZIP_COMPRESSOR_CHUNKED : LASZIP_COMPRESSOR_NOT_CHUNKED) : LASZIP_COMPRESSOR_NONE), (use_v1 ? 1 : 2), chunk_size))
-      {
-        fprintf(stderr,"ERROR: cannot open laswriterlas with file name '%s'\n", file_name);
-        delete laswriterlas;
-        return 0;
-      }
-      return laswriterlas;
-    }
+      if (format <= LAS_TOOLS_FORMAT_LAZ)
+	{
+	  if (!is_mpi)
+	    {
+	      LASwriterLAS* laswriterlas = new LASwriterLAS ();
+	      if (!laswriterlas->open (
+		  file_name,
+		  header,
+		  (format == LAS_TOOLS_FORMAT_LAZ ?
+		      (use_chunking ?
+		      LASZIP_COMPRESSOR_CHUNKED :
+				      LASZIP_COMPRESSOR_NOT_CHUNKED) :
+		      LASZIP_COMPRESSOR_NONE),
+		  (use_v1 ? 1 : 2), chunk_size))
+		{
+		  fprintf (
+		      stderr,
+		      "ERROR: cannot open laswriterlas with file name '%s'\n",
+		      file_name);
+		  delete laswriterlas;
+		  return 0;
+		}
+	      return laswriterlas;
+	    }
+	  else
+	    {
+	      LASwriterLAS* laswriterlas = new LASwriterLAS ();
+	      MPI_File fh;
+	      MPI_File_open (MPI_COMM_WORLD, file_name,
+			     MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fh);
+	      if (!laswriterlas->open (
+		  fh,
+		  header,
+		  (format == LAS_TOOLS_FORMAT_LAZ ?
+		      (use_chunking ?
+		      LASZIP_COMPRESSOR_CHUNKED :
+				      LASZIP_COMPRESSOR_NOT_CHUNKED) :
+		      LASZIP_COMPRESSOR_NONE),
+		  (use_v1 ? 1 : 2), chunk_size))
+		{
+		  fprintf (
+		      stderr,
+		      "ERROR: cannot open laswriterlas with mpi file name '%s'\n",
+		      file_name);
+		  delete laswriterlas;
+		  return 0;
+		}
+	      return laswriterlas;
+
+	    }
+	}
     else if (format == LAS_TOOLS_FORMAT_TXT)
     {
       LASwriterTXT* laswritertxt = new LASwriterTXT();

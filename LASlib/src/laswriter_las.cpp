@@ -32,9 +32,10 @@
 
 #include "bytestreamout_nil.hpp"
 #include "bytestreamout_file.hpp"
+#include "bytestreamout_mpi.hpp"
 #include "bytestreamout_ostream.hpp"
 #include "laswritepoint.hpp"
-
+#include <mpi.h>
 #ifdef _WIN32
 #include <fcntl.h>
 #include <io.h>
@@ -49,6 +50,15 @@ BOOL LASwriterLAS::refile(FILE* file)
   if (this->file) this->file = file;
   return ((ByteStreamOutFile*)stream)->refile(file);
 }
+
+BOOL LASwriterLAS::refile(MPI_File fh)
+{
+  if (stream == 0) return FALSE;
+  if (this->fh) this->fh = fh;
+  return ((ByteStreamOutMPI*)stream)->refile(fh);
+}
+
+
 
 BOOL LASwriterLAS::open(const LASheader* header, U32 compressor, I32 requested_version, I32 chunk_size)
 {
@@ -84,6 +94,25 @@ BOOL LASwriterLAS::open(const char* file_name, const LASheader* header, U32 comp
 
   return open(out, header, compressor, requested_version, chunk_size);
 }
+
+BOOL LASwriterLAS::open(MPI_File fh, const LASheader* header, U32 compressor, I32 requested_version, I32 chunk_size, U32 io_buffer_size)
+{
+  if (fh == 0)
+  {
+    fprintf(stderr,"ERROR: MPI File is zero\n");
+    return FALSE;
+  }
+
+  ByteStreamOut* out;
+  if (IS_LITTLE_ENDIAN())
+    out = new ByteStreamOutMPILE(fh);
+  else
+    out = new ByteStreamOutMPIBE(fh);
+
+  return open(out, header, compressor, requested_version, chunk_size);
+}
+
+
 
 BOOL LASwriterLAS::open(FILE* file, const LASheader* header, U32 compressor, I32 requested_version, I32 chunk_size)
 {

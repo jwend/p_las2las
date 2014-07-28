@@ -56,7 +56,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <mpi.h>
 
 #include "lasreader.hpp"
 #include "laswriter.hpp"
@@ -150,6 +150,14 @@ int main(int argc, char *argv[])
   LASreadOpener lasreadopener;
   GeoProjectionConverter geoprojectionconverter;
   LASwriteOpener laswriteopener;
+  laswriteopener.setIsMpi(TRUE);
+  MPI_Init(&argc,&argv);
+  int process_count;
+  int rank;
+  MPI_Comm_size(MPI_COMM_WORLD,&process_count);
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  printf ("MPI task %d has started...\n", rank);
+
 
   if (argc == 1)
   {
@@ -965,7 +973,7 @@ int main(int argc, char *argv[])
     {
       if (reproject_quantizer) lasreader->header = *reproject_quantizer;
       laswriter->update_header(&lasreader->header, TRUE);
-      if (verbose) { fprintf(stderr,"total time: %g sec. written %u surviving points.\n", taketime()-start_time, (U32)laswriter->p_count); }
+      if (verbose) { fprintf(stderr,"total time: %g sec. written %u surviving points. rank: %i\n", taketime()-start_time, (U32)laswriter->p_count, rank); }
     }
     else
     {
@@ -984,6 +992,6 @@ int main(int argc, char *argv[])
   }
 
   byebye(false, argc==1);
-
+  MPI_Finalize();
   return 0;
 }

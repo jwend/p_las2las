@@ -46,6 +46,8 @@
 #else
 #include <istream>
 #include <fstream>
+#include <mpi.h>
+
 using namespace std;
 #endif
 
@@ -57,9 +59,10 @@ class LASwriterLAS : public LASwriter
 public:
 
   BOOL refile(FILE* file);
-
+  BOOL refile(MPI_File fh);
   BOOL open(const LASheader* header, U32 compressor=LASZIP_COMPRESSOR_NONE, I32 requested_version=0, I32 chunk_size=50000);
   BOOL open(const char* file_name, const LASheader* header, U32 compressor=LASZIP_COMPRESSOR_NONE, I32 requested_version=0, I32 chunk_size=50000, U32 io_buffer_size=65536);
+  BOOL open(MPI_File fh, const LASheader* header, U32 compressor=LASZIP_COMPRESSOR_NONE, I32 requested_version=0, I32 chunk_size=50000, U32 io_buffer_size=65536);
   BOOL open(FILE* file, const LASheader* header, U32 compressor=LASZIP_COMPRESSOR_NONE, I32 requested_version=0, I32 chunk_size=50000);
   BOOL open(ostream& ostream, const LASheader* header, U32 compressor=LASZIP_COMPRESSOR_NONE, I32 requested_version=0, I32 chunk_size=50000);
 
@@ -77,6 +80,7 @@ private:
   ByteStreamOut* stream;
   LASwritePoint* writer;
   FILE* file;
+  MPI_File fh;
   I64 header_start_position;
   BOOL writing_las_1_4;
 };

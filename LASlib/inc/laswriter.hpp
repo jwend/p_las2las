@@ -52,6 +52,7 @@ public:
   I64 p_count;
   LASinventory inventory;
 
+
   virtual BOOL write_point(const LASpoint* point) = 0;
   virtual void update_inventory(const LASpoint* point) { inventory.add(point); };
   virtual BOOL chunk() = 0;
@@ -97,7 +98,17 @@ public:
   LASwaveform13writer* open_waveform13(const LASheader* lasheader);
   LASwriteOpener();
   ~LASwriteOpener();
+
+	int getIsMpi() const {
+		return is_mpi;
+	}
+
+	void setIsMpi(int isMpi) {
+		is_mpi = isMpi;
+	}
+
 private:
+  int is_mpi;
   void add_directory(const CHAR* directory=0);
   void add_appendix(const CHAR* appendix=0);
   void cut_characters(U32 cut=0);
