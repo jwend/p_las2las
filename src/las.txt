@@ -1,0 +1,65 @@
+lasinfo for out2.las
+reporting all LAS header entries:
+  file signature:             'LASF'
+  file source ID:             0
+  global_encoding:            1
+  project ID GUID data 1-4:   00000000-0000-0000-0000-000000000000
+  version major.minor:        1.2
+  system identifier:          'LAStools (c) by rapidlasso GmbH'
+  generating software:        'las2las (version 140721)'
+  file creation day/year:     65/2014
+  header size:                227
+  offset to point data:       447
+  number var. length records: 2
+  point data format:          1
+  point data record length:   28
+  number of point records:    1183394
+  number of points by return: 751271 354614 72002 5507 0
+  scale factor x y z:         0.001 0.001 0.001
+  offset x y z:               228000 3933000 0
+  min x y z:                  228000.000 3933000.000 265.810
+  max x y z:                  229499.990 3934499.990 475.950
+variable length header record 1 of 2:
+  reserved             43707
+  user ID              'LASF_Projection'
+  record ID            34735
+  length after header  88
+  description          'Georeferencing Information'
+    GeoKeyDirectoryTag version 1.1.0 number of keys 10
+      key 1024 tiff_tag_location 0 count 1 value_offset 1 - GTModelTypeGeoKey: ModelTypeProjected
+      key 2048 tiff_tag_location 0 count 1 value_offset 4269 - GeographicTypeGeoKey: GCS_NAD83
+      key 2054 tiff_tag_location 0 count 1 value_offset 9102 - GeogAngularUnitsGeoKey: Angular_Degree
+      key 2056 tiff_tag_location 0 count 1 value_offset 7019 - GeogEllipsoidGeoKey: Ellipse_GRS_1980
+      key 2057 tiff_tag_location 34736 count 1 value_offset 0 - GeogSemiMajorAxisGeoKey: 6378137
+      key 2058 tiff_tag_location 34736 count 1 value_offset 1 - GeogSemiMinorAxisGeoKey: 6356752.314
+      key 2059 tiff_tag_location 34736 count 1 value_offset 2 - GeogInvFlatteningGeoKey: 298.2572221
+      key 3072 tiff_tag_location 0 count 1 value_offset 26917 - ProjectedCSTypeGeoKey: UTM 17 northern hemisphere
+      key 3076 tiff_tag_location 0 count 1 value_offset 9001 - ProjLinearUnitsGeoKey: Linear_Meter
+      key 4099 tiff_tag_location 0 count 1 value_offset 9001 - VerticalUnitsGeoKey: Linear_Meter
+variable length header record 2 of 2:
+  reserved             43707
+  user ID              'LASF_Projection'
+  record ID            34736
+  length after header  24
+  description          'Double Param Array'
+    GeoDoubleParamsTag (number of doubles 3)
+      6.37814e+06 6.35675e+06 298.257 
+reporting minimum and maximum for all LAS point record entries ...
+  X                   0    1499990
+  Y                   0    1499990
+  Z              265810     475950
+  intensity           1        255
+  return_number       1          4
+  number_of_returns   1          4
+  edge_of_flight_line 0          0
+  scan_direction_flag 0          1
+  classification      1          2
+  scan_angle_rank   -18         18
+  user_data         180        237
+  point_source_ID   125        128
+  gps_time -18087824.959125 -13854727.951392
+WARNING: there is coordinate resolution fluff (x10) in XYZ
+overview over number of returns of given pulse: 393439 566990 200766 22199 0 0 0
+histogram of classification of points:
+          599734 unclassified (1)
+          583660 ground (2)

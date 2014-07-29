@@ -51,6 +51,7 @@
 
 LASreader::LASreader()
 {
+  my_count = 0;
   npoints = 0;
   p_count = 0;
   read_simple = &LASreader::read_point_default;

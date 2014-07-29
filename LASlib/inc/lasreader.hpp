@@ -208,11 +208,25 @@ public:
   LASwaveform13reader* open_waveform13(const LASheader* lasheader);
   LASreadOpener();
   ~LASreadOpener();
+
+  int
+  getIsMpi () const
+  {
+    return is_mpi;
+  }
+
+  void
+  setIsMpi (int isMpi)
+  {
+    is_mpi = isMpi;
+  }
+
 private:
 #ifdef _WIN32
   BOOL add_file_name_single(const char* file_name, BOOL unique=FALSE);
   BOOL add_neighbor_file_name_single(const char* neighbor_file_name, BOOL unique=FALSE);
 #endif
+  int is_mpi;
   I32 io_ibuffer_size;
   char** file_names;
   const char* file_name;

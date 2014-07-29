@@ -1210,6 +1210,13 @@ I64 LASwriterLAS::close(BOOL update_header)
     fclose(file);
     file = 0;
   }
+  if (fh)
+   {
+     MPI_File_close(&fh);
+     fh = 0;
+   }
+
+
 
   npoints = p_count;
   p_count = 0;

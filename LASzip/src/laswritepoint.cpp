@@ -35,7 +35,7 @@
 #include "laswriteitemraw.hpp"
 #include "laswriteitemcompressed_v1.hpp"
 #include "laswriteitemcompressed_v2.hpp"
-
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -367,6 +367,7 @@ BOOL LASwritePoint::write_chunk_table()
   }
   if (number_chunks > 0)
   {
+	  printf("writing chunks\n");
     enc->init(outstream);
     IntegerCompressor ic(enc, 32, 2);
     ic.initCompressor();

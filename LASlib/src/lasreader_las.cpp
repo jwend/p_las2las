@@ -32,6 +32,7 @@
 
 #include "bytestreamin.hpp"
 #include "bytestreamin_file.hpp"
+#include "bytestreamin_mpi.hpp"
 #include "bytestreamin_istream.hpp"
 #include "lasreadpoint.hpp"
 #include "lasindex.hpp"
@@ -74,6 +75,27 @@ BOOL LASreaderLAS::open(const char* file_name, U32 io_buffer_size)
 
   return open(in);
 }
+
+
+BOOL LASreaderLAS::open(MPI_File fh, U32 io_buffer_size)
+{
+  if (fh == 0)
+  {
+    fprintf(stderr,"ERROR: MPI_File handle is zero\n");
+    return FALSE;
+  }
+
+
+  // create input
+  ByteStreamIn* in;
+  if (IS_LITTLE_ENDIAN())
+    in = new ByteStreamInMPILE(fh);
+  else
+    in = new ByteStreamInMPIBE(fh);
+
+  return open(in);
+}
+
 
 BOOL LASreaderLAS::open(FILE* file)
 {

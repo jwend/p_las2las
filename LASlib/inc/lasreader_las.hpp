@@ -39,7 +39,7 @@
 #include "lasreader.hpp"
 
 #include <stdio.h>
-
+#include <mpi.h>
 #ifdef LZ_WIN32_VC6
 #include <fstream.h>
 #else
@@ -55,6 +55,7 @@ class LASreaderLAS : public LASreader
 public:
 
   BOOL open(const char* file_name, U32 io_buffer_size=65536);
+  BOOL open(MPI_File fh, U32 io_buffer_size=65536);
   BOOL open(FILE* file);
   BOOL open(istream& stream);
 
@@ -74,6 +75,7 @@ protected:
 
 private:
   FILE* file;
+  MPI_File fh;
   ByteStreamIn* stream;
   LASreadPoint* reader;
 };
