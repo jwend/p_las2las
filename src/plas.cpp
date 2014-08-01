@@ -148,6 +148,7 @@ int main(int argc, char *argv[])
   double start_time = 0;
 
   LASreadOpener lasreadopener;
+  lasreadopener.setIsMpi(TRUE);
   GeoProjectionConverter geoprojectionconverter;
   LASwriteOpener laswriteopener;
   laswriteopener.setIsMpi(TRUE);
@@ -937,11 +938,18 @@ int main(int argc, char *argv[])
     else
     {
       int mycount =0;
+
+      I64 process_points = lasreader->npoints / process_count;
+      subsequence_start = rank*process_points;
+      subsequence_stop =  subsequence_start + process_points;
+      lasreader->seek(subsequence_start);
+
+
       while (lasreader->read_point())
       {
     	  // if(mycount++  < 10) printf("point undefined %i %i\n", mycount, lasreader->point.get_X());
       mycount++;
-      //  if (lasreader->p_count > subsequence_stop) break;
+           if (lasreader->p_count > subsequence_stop) break;
 
        // if (clip_to_bounding_box)
       //  {
@@ -979,6 +987,7 @@ int main(int argc, char *argv[])
     {
       if (verbose) { fprintf(stderr,"main pass took %g sec.\n", taketime()-start_time); }
     }
+    MPI_Barrier(MPI_COMM_WORLD);
 
     laswriter->close();
     delete laswriter;
@@ -988,10 +997,12 @@ int main(int argc, char *argv[])
 
     if (reproject_quantizer) delete reproject_quantizer;
 
-    laswriteopener.set_file_name(0);
+//    laswriteopener.set_file_name(0);
   }
 
   byebye(false, argc==1);
+  printf("before finalize\n");
   MPI_Finalize();
+  printf("after finalize\n");
   return 0;
 }

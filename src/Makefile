@@ -17,7 +17,7 @@ LASINCLUDE  = -I../LASlib/zip/src -I../LASlib/inc
 #all: laszip lasinfo lasprecision las2txt txt2las las2las lasdiff lasmerge lasindex
 all: plas
 
-plas: plas.o geoprojectionconverter.o
+plas: plas.o geoprojectionconverter.o ../LASlib/lib/liblas.a
 	${LINKER} ${BITS} ${COPTS} plas.o geoprojectionconverter.o -llas -o $@ ${LIBS} ${LASLIBS} $(INCLUDE) $(LASINCLUDE)
 	cp $@ ../bin
 

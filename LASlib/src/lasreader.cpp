@@ -51,6 +51,7 @@
 
 LASreader::LASreader()
 {
+
   my_count = 0;
   npoints = 0;
   p_count = 0;
@@ -386,6 +387,9 @@ void LASreadOpener::reset()
 
 LASreader* LASreadOpener::open(const char* other_file_name)
 {
+
+  printf("other_file_name %s, file_names %s, merged %i\n", other_file_name, file_names, merged   );
+
   if (filter) filter->reset();
 
   if (file_names || other_file_name)
@@ -512,6 +516,7 @@ LASreader* LASreadOpener::open(const char* other_file_name)
         file_name = file_names[file_name_current];
         file_name_current++;
       }
+      printf("in else\n");
       if (files_are_flightlines)
       {
         transform->setPointSource(file_name_current);
@@ -524,6 +529,7 @@ LASreader* LASreadOpener::open(const char* other_file_name)
           if (auto_reoffset)
             lasreaderlas = new LASreaderLASreoffset();
           else
+            printf("standart las reader\n");
             lasreaderlas = new LASreaderLAS();
         }
         else if (scale_factor != 0 && offset == 0)
@@ -537,11 +543,30 @@ LASreader* LASreadOpener::open(const char* other_file_name)
           lasreaderlas = new LASreaderLASreoffset(offset[0], offset[1], offset[2]);
         else
           lasreaderlas = new LASreaderLASrescalereoffset(scale_factor[0], scale_factor[1], scale_factor[2], offset[0], offset[1], offset[2]);
-        if (!lasreaderlas->open(file_name, io_ibuffer_size))
-        {
-          fprintf(stderr,"ERROR: cannot open lasreaderlas with file name '%s'\n", file_name);
-          delete lasreaderlas;
-          return 0;
+
+
+
+        if(!getIsMpi()){
+
+          if (!lasreaderlas->open(file_name, io_ibuffer_size))
+          {
+            fprintf(stderr,"ERROR: cannot open lasreaderlas with file name '%s'\n", file_name);
+            delete lasreaderlas;
+            return 0;
+          }
+          else printf("lasreaderlas->open success, io_buffersize %i, file_name %s\n", io_ibuffer_size, file_name);
+        }
+        else{ // mpi
+          MPI_File fh;
+          MPI_File_open(MPI_COMM_WORLD, (char*)file_name, MPI_MODE_RDONLY, MPI_INFO_NULL, &fh);
+          if (!lasreaderlas->open(fh))
+          {
+            fprintf(stderr,"ERROR: cannot open lasreaderlas with file name '%s'\n", file_name);
+            delete lasreaderlas;
+            return 0;
+          }
+          else printf("lasreaderlas->open success, with mpi file_name %s\n", file_name);
+
         }
         LASindex* index = new LASindex();
         if (index->read(file_name))
@@ -2033,6 +2058,7 @@ BOOL LASreadOpener::active() const
 
 LASreadOpener::LASreadOpener()
 {
+  is_mpi = 0;
   io_ibuffer_size = 65536;
   file_names = 0;
   file_name = 0;
