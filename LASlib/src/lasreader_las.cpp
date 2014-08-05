@@ -1381,11 +1381,17 @@ void LASreaderLAS::close(BOOL close_stream)
       fclose(file);
       file = 0;
     }
+    if (fh)
+    {
+      MPI_File_close(&fh);
+      fh = 0;
+    }
   }
 }
 
 LASreaderLAS::LASreaderLAS()
 {
+  fh = 0;
   file = 0;
   stream = 0;
   reader = 0;

@@ -1049,6 +1049,7 @@ void LASwriteOpener::cut_characters(U32 cut)
 
 LASwriteOpener::LASwriteOpener()
 {
+  is_mpi = 0;
   directory = 0;
   file_name = 0;
   appendix = 0;

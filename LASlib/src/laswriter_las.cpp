@@ -103,6 +103,8 @@ BOOL LASwriterLAS::open(MPI_File fh, const LASheader* header, U32 compressor, I3
     return FALSE;
   }
 
+  this->fh =fh;
+
   ByteStreamOut* out;
   if (IS_LITTLE_ENDIAN())
     out = new ByteStreamOutMPILE(fh);
@@ -1211,12 +1213,10 @@ I64 LASwriterLAS::close(BOOL update_header)
     file = 0;
   }
   if (fh)
-   {
-     MPI_File_close(&fh);
-     fh = 0;
-   }
-
-
+  {
+    MPI_File_close(&fh);
+    fh = 0;
+  }
 
   npoints = p_count;
   p_count = 0;
@@ -1227,6 +1227,7 @@ I64 LASwriterLAS::close(BOOL update_header)
 LASwriterLAS::LASwriterLAS()
 {
   file = 0;
+  fh = 0;
   stream = 0;
   writer = 0;
   writing_las_1_4 = FALSE;

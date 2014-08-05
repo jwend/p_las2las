@@ -57,7 +57,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mpi.h>
-
+#include <math.h>
 #include "lasreader.hpp"
 #include "laswriter.hpp"
 #include "geoprojectionconverter.hpp"
@@ -123,7 +123,7 @@ const U8 convert_point_type_from_to[11][11] =
 int main(int argc, char *argv[])
 {
   int i;
-
+  int is_mpi = 0;
   bool verbose = false;
   bool force = false;
   // fixed header changes 
@@ -148,16 +148,21 @@ int main(int argc, char *argv[])
   double start_time = 0;
 
   LASreadOpener lasreadopener;
-  lasreadopener.setIsMpi(TRUE);
+  if(is_mpi)lasreadopener.setIsMpi(TRUE);
   GeoProjectionConverter geoprojectionconverter;
   LASwriteOpener laswriteopener;
-  laswriteopener.setIsMpi(TRUE);
-  MPI_Init(&argc,&argv);
-  int process_count;
-  int rank;
-  MPI_Comm_size(MPI_COMM_WORLD,&process_count);
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-  printf ("MPI task %d has started...\n", rank);
+  if(is_mpi)laswriteopener.setIsMpi(TRUE);
+
+
+  int process_count = 1;
+  int rank = 0;
+  if (is_mpi){
+      MPI_Init(&argc,&argv);
+      MPI_Comm_size(MPI_COMM_WORLD,&process_count);
+      MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+      printf ("MPI task %d has started...\n", rank);
+  }
+
 
 
   if (argc == 1)
@@ -944,11 +949,55 @@ int main(int argc, char *argv[])
       subsequence_stop =  subsequence_start + process_points;
       lasreader->seek(subsequence_start);
 
+      I32 filtered_count = 0;
+      I32* filtered_counts = (I32*)malloc(process_count * sizeof(I32));
+
+      while (lasreader->read_point()){
+	  if (lasreader->p_count > subsequence_stop) break;
+	  filtered_count++;
+      }
+      if(is_mpi)MPI_Barrier(MPI_COMM_WORLD);
+
+
+      filtered_counts[rank] = filtered_count;
+      if(is_mpi)MPI_Allgather(&filtered_count, 1, MPI_INTEGER, filtered_counts, 1, MPI_INTEGER, MPI_COMM_WORLD);
+
+      if(is_mpi)MPI_Barrier(MPI_COMM_WORLD);
+
+
+      for(int k =0; k< process_count; k++){
+	  printf("filtered count, rank %i is %i %i\n", k, filtered_counts[k], rank);
+      }
+
+
+      int write_point_offset = 0;
+      for (int k=0; k < rank; k++){
+	  write_point_offset += filtered_counts[k];
+      }
+
+      //laswriter->seek(write_point_offset);
+
+      lasreader->seek(subsequence_start);
+      if(is_mpi){
+        MPI_File fh = laswriter->get_MPI_File();
+        MPI_Offset cur = 0;
+
+        printf("fh %s\n", fh);
+
+
+        MPI_File_seek(fh, write_point_offset*28, MPI_SEEK_CUR);
+
+        MPI_File_get_position(fh, &cur);
+
+        printf ("rank %i, write offset %lli\n", rank, cur);
+
+      }
+
 
       while (lasreader->read_point())
       {
     	  // if(mycount++  < 10) printf("point undefined %i %i\n", mycount, lasreader->point.get_X());
-      mycount++;
+          //mycount++;
            if (lasreader->p_count > subsequence_stop) break;
 
        // if (clip_to_bounding_box)
@@ -969,7 +1018,7 @@ int main(int argc, char *argv[])
         // without extra pass we need inventory of surviving points
     	  if (!extra_pass){
         	laswriter->update_inventory(&lasreader->point);
-        	if(mycount == 1) printf("extra pass update_inventory\n");
+
     	  }
       }
       printf("while loop count %i %i\n", mycount, lasreader->my_count);
@@ -987,22 +1036,23 @@ int main(int argc, char *argv[])
     {
       if (verbose) { fprintf(stderr,"main pass took %g sec.\n", taketime()-start_time); }
     }
-    MPI_Barrier(MPI_COMM_WORLD);
+    if(is_mpi)MPI_Barrier(MPI_COMM_WORLD);
 
+    printf("before writer close\n");
     laswriter->close();
     delete laswriter;
-
+    printf("before reader close\n");
     lasreader->close();
     delete lasreader;
-
+    printf("after reader close\n");
     if (reproject_quantizer) delete reproject_quantizer;
 
 //    laswriteopener.set_file_name(0);
   }
-
-  byebye(false, argc==1);
   printf("before finalize\n");
-  MPI_Finalize();
-  printf("after finalize\n");
+  if(is_mpi)MPI_Finalize();
+
+  //byebye(false, argc==1);
+
   return 0;
 }

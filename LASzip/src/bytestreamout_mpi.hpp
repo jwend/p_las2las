@@ -126,7 +126,7 @@ inline BOOL ByteStreamOutMPI::putByte(U8 byte)
 {
   //return (fputc(byte, file) == byte);
   MPI_Status status;
-  int rtn = MPI_File_write_shared (fh, &byte, 1, MPI_BYTE, &status);
+  int rtn = MPI_File_write(fh, &byte, 1, MPI_BYTE, &status);
   if (rtn == MPI_SUCCESS)
     return TRUE;
   else
@@ -138,7 +138,7 @@ inline BOOL ByteStreamOutMPI::putBytes(const U8* bytes, U32 num_bytes)
 {
   //return (fwrite(bytes, 1, num_bytes, file) == num_bytes);
   MPI_Status status;
-  int rtn = MPI_File_write_shared (fh, (void *)bytes, num_bytes, MPI_BYTE, &status);
+  int rtn = MPI_File_write(fh, (void *)bytes, num_bytes, MPI_BYTE, &status);
   if (rtn == MPI_SUCCESS)
     return TRUE;
   else
@@ -161,7 +161,7 @@ inline I64 ByteStreamOutMPI::tell() const
 //  return (I64)ftello(file);
 //#endif
   MPI_Offset offset;
-  MPI_File_get_position_shared(fh, &offset);
+  MPI_File_get_position(fh, &offset);
   return (I64)offset;
 
 
@@ -177,7 +177,7 @@ inline BOOL ByteStreamOutMPI::seek(I64 position)
 //  return !(fseeko(file, (off_t)position, SEEK_SET));
 //#endif
 
-  int rtn = MPI_File_seek_shared (fh, position, MPI_SEEK_SET);
+  int rtn = MPI_File_seek(fh, position, MPI_SEEK_SET);
   if (rtn == MPI_SUCCESS)
     return TRUE;
   else
@@ -194,7 +194,7 @@ inline BOOL ByteStreamOutMPI::seekEnd()
 //  return !(fseeko(file, (off_t)0, SEEK_END));
 //#endif
 
-  int rtn = MPI_File_seek_shared (fh, 0, MPI_SEEK_END);
+  int rtn = MPI_File_seek(fh, 0, MPI_SEEK_END);
   if (rtn == MPI_SUCCESS)
     return TRUE;
   else
