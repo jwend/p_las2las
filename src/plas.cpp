@@ -123,7 +123,7 @@ const U8 convert_point_type_from_to[11][11] =
 int main(int argc, char *argv[])
 {
   int i;
-  int is_mpi = 0;
+  int is_mpi = 1;
   bool verbose = false;
   bool force = false;
   // fixed header changes 
@@ -940,24 +940,34 @@ int main(int argc, char *argv[])
       delete point;
       point = 0;
     }
-    else
+    else // ***************************** MPI ********************************************************
     {
       int mycount =0;
 
+      int left_over_count = lasreader->npoints % process_count;
       I64 process_points = lasreader->npoints / process_count;
       subsequence_start = rank*process_points;
       subsequence_stop =  subsequence_start + process_points;
+      if(rank == process_count-1) subsequence_stop += left_over_count;
       lasreader->seek(subsequence_start);
 
       I32 filtered_count = 0;
       I32* filtered_counts = (I32*)malloc(process_count * sizeof(I32));
+      LASinventory my_inventory;
 
       while (lasreader->read_point()){
 	  if (lasreader->p_count > subsequence_stop) break;
-	  filtered_count++;
+	  //filtered_count++;
+	  my_inventory.add(&lasreader->point);
       }
+      filtered_count = my_inventory.number_of_point_records;
+
+
       if(is_mpi)MPI_Barrier(MPI_COMM_WORLD);
 
+
+
+      if(is_mpi)MPI_Barrier(MPI_COMM_WORLD);
 
       filtered_counts[rank] = filtered_count;
       if(is_mpi)MPI_Allgather(&filtered_count, 1, MPI_INTEGER, filtered_counts, 1, MPI_INTEGER, MPI_COMM_WORLD);
@@ -975,7 +985,7 @@ int main(int argc, char *argv[])
 	  write_point_offset += filtered_counts[k];
       }
 
-      //laswriter->seek(write_point_offset);
+
 
       lasreader->seek(subsequence_start);
       if(is_mpi){
@@ -984,7 +994,7 @@ int main(int argc, char *argv[])
 
         printf("fh %s\n", fh);
 
-
+        // jdw, todo, remove the hardcoding by adding methods to read point size from reader?
         MPI_File_seek(fh, write_point_offset*28, MPI_SEEK_CUR);
 
         MPI_File_get_position(fh, &cur);
@@ -992,6 +1002,53 @@ int main(int argc, char *argv[])
         printf ("rank %i, write offset %lli\n", rank, cur);
 
       }
+
+      if(is_mpi)MPI_Barrier(MPI_COMM_WORLD);
+
+
+      // accumulate inventory in rank 0
+
+      if (is_mpi){
+          U32 number_of_point_records = 0;
+          U32 number_of_points_by_return[8];
+          for(int i = 0; i<8; i++)number_of_points_by_return[i] = 0;
+          I32 max_X = 0;
+          I32 min_X = 0;
+          I32 max_Y = 0;
+          I32 min_Y = 0;
+          I32 max_Z = 0;
+          I32 min_Z = 0;
+
+          MPI_Reduce(&my_inventory.number_of_point_records, &number_of_point_records, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
+          MPI_Reduce(&my_inventory.number_of_points_by_return, &number_of_points_by_return, 8, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
+          MPI_Reduce(&my_inventory.max_X, &max_X, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+          MPI_Reduce(&my_inventory.min_X, &min_X, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+          MPI_Reduce(&my_inventory.max_Y, &max_Y, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+          MPI_Reduce(&my_inventory.min_Y, &min_Y, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+          MPI_Reduce(&my_inventory.max_Z, &max_Z, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+          MPI_Reduce(&my_inventory.min_Z, &min_Z, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+
+
+          if (rank ==0){
+              //printf("this_point_records %i tl_point_records %i, rank %i\n", this_point_records, total_point_records, rank);
+              my_inventory.number_of_point_records = number_of_point_records;
+              for(int i=0; i<8; i++)my_inventory.number_of_points_by_return[i] = number_of_points_by_return[i];
+              my_inventory.max_X = max_X;
+              my_inventory.min_X = min_X;
+              my_inventory.max_Y = max_Y;
+              my_inventory.min_Y = min_Y;
+              my_inventory.max_Z = max_Z;
+              my_inventory.min_Z = min_Z;
+          }
+        }
+
+
+
+
+      laswriter->inventory = my_inventory;
+      printf("number_of_point_records %i, rank %i\n", laswriter->inventory.number_of_point_records, rank);
+
+
 
 
       while (lasreader->read_point())
@@ -1015,16 +1072,23 @@ int main(int argc, char *argv[])
      //     lasreader->point.compute_XYZ(reproject_quantizer);
       //  }
     	  laswriter->write_point(&lasreader->point);
-        // without extra pass we need inventory of surviving points
-    	  if (!extra_pass){
-        	laswriter->update_inventory(&lasreader->point);
 
-    	  }
+    	// jdw, this is done above
+        // without extra pass we need inventory of surviving points
+    	//  if (!extra_pass){
+        //	laswriter->update_inventory(&lasreader->point);
+
+    	//  }
       }
+
       printf("while loop count %i %i\n", mycount, lasreader->my_count);
     }
 
     // without the extra pass we need to fix the header now
+    // do the mpi inventory reconciliation
+
+
+    if(rank == 0){
 
     if (!extra_pass)
     {
@@ -1036,10 +1100,15 @@ int main(int argc, char *argv[])
     {
       if (verbose) { fprintf(stderr,"main pass took %g sec.\n", taketime()-start_time); }
     }
+    }
+
+
+
+
     if(is_mpi)MPI_Barrier(MPI_COMM_WORLD);
 
     printf("before writer close\n");
-    laswriter->close();
+    laswriter->close(FALSE);
     delete laswriter;
     printf("before reader close\n");
     lasreader->close();
