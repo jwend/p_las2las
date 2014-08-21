@@ -33,12 +33,17 @@
 
 #include "lasdefinitions.hpp"
 
+
+
+
 class LASinventory
 {
 public:
   BOOL active() const { return (first == FALSE); }; 
-  U32 number_of_point_records;
-  U32 number_of_points_by_return[8];
+  //U32 number_of_point_records;
+  //U32 number_of_points_by_return[8];
+  I64 number_of_point_records;
+  I64 number_of_points_by_return[8];
   I32 max_X;
   I32 min_X;
   I32 max_Y;

@@ -388,7 +388,7 @@ void LASreadOpener::reset()
 LASreader* LASreadOpener::open(const char* other_file_name)
 {
 
-  printf("other_file_name %s, file_names %s, merged %i\n", other_file_name, file_names, merged   );
+  // jdw, printf("other_file_name %s, file_names %s, merged %i\n", other_file_name, file_names, merged   );
 
   if (filter) filter->reset();
 
@@ -516,7 +516,7 @@ LASreader* LASreadOpener::open(const char* other_file_name)
         file_name = file_names[file_name_current];
         file_name_current++;
       }
-      printf("in else\n");
+      // jdw, printf("in else\n");
       if (files_are_flightlines)
       {
         transform->setPointSource(file_name_current);
@@ -529,7 +529,7 @@ LASreader* LASreadOpener::open(const char* other_file_name)
           if (auto_reoffset)
             lasreaderlas = new LASreaderLASreoffset();
           else
-            printf("standart las reader\n");
+            // jdw, printf("standart las reader\n");
             lasreaderlas = new LASreaderLAS();
         }
         else if (scale_factor != 0 && offset == 0)
@@ -554,7 +554,7 @@ LASreader* LASreadOpener::open(const char* other_file_name)
             delete lasreaderlas;
             return 0;
           }
-          else printf("lasreaderlas->open success, io_buffersize %i, file_name %s\n", io_ibuffer_size, file_name);
+          // jdw, else printf("lasreaderlas->open success, io_buffersize %i, file_name %s\n", io_ibuffer_size, file_name);
         }
         else{ // mpi
           MPI_File fh;

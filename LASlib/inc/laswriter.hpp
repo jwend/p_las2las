@@ -44,6 +44,7 @@
 
 #include "lasutility.hpp"
 #include "mpi.h"
+#include <stdio.h>
 
 class LASwriter
 {
@@ -64,6 +65,7 @@ public:
   LASwriter() { npoints = 0; p_count = 0; };
   virtual ~LASwriter() {};
   virtual MPI_File get_MPI_File() { return 0; };
+  virtual FILE* get_file() { return 0; };
 };
 
 #include "laswaveform13writer.hpp"

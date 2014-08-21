@@ -72,6 +72,7 @@ public:
   BOOL update_header(const LASheader* header, BOOL use_inventory=TRUE, BOOL update_extra_bytes=FALSE);
   I64 close(BOOL update_npoints=TRUE);
   MPI_File get_MPI_File() {return fh;};
+  FILE *get_file(){ return file; };
   LASwriterLAS();
   ~LASwriterLAS();
 

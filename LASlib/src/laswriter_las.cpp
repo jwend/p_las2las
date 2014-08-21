@@ -1162,9 +1162,9 @@ I64 LASwriterLAS::close(BOOL update_header)
   if (p_count != npoints)
   {
 #ifdef _WIN32
-    fprintf(stderr,"WARNING: written %I64d points but expected %I64d points\n", p_count, npoints);
+    // jdw fprintf(stderr,"WARNING: written %I64d points but expected %I64d points\n", p_count, npoints);
 #else
-    fprintf(stderr,"WARNING: written %lld points but expected %lld points\n", p_count, npoints);
+    // jdw fprintf(stderr,"WARNING: written %lld points but expected %lld points\n", p_count, npoints);
 #endif
   }
 

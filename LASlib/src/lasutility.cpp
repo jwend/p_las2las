@@ -1,7 +1,7 @@
 /*
 ===============================================================================
 
-  FILE:  lasutility.cpp
+   FILE:  lasutility.cpp
   
   CONTENTS:
   
@@ -33,16 +33,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 LASinventory::LASinventory()
 {
   U32 i;
   number_of_point_records = 0;
   for (i = 0; i < 8; i++) number_of_points_by_return[i] = 0;
-  max_X = min_X = 0;
-  max_Y = min_Y = 0;
-  max_Z = min_Z = 0;
+  //max_X = min_X = 0;
+  //max_Y = min_Y = 0;
+  //max_Z = min_Z = 0;
+
+  max_X = max_Y = max_Z = INT_MIN;
+  min_X = min_Y = min_Z = INT_MAX;
   first = TRUE;
+
 }
 
 BOOL LASinventory::add(const LASpoint* point)

@@ -69,6 +69,8 @@ public:
   LASreaderLAS();
   virtual ~LASreaderLAS();
 
+  MPI_File get_MPI_File() {return fh;};
+  FILE *get_file(){ return file; };
 protected:
   virtual BOOL open(ByteStreamIn* stream);
   virtual BOOL read_point_default();
