@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 {
   int i;
   int is_mpi = 1;
-  int debug = 0;
+  int debug = 1;
   bool verbose = false;
   bool force = false;
   // fixed header changes 
@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
   //if(is_mpi)lasreadopener.setIsMpi(TRUE);
   GeoProjectionConverter geoprojectionconverter;
   LASwriteOpener laswriteopener;
-  //if(is_mpi)laswriteopener.setIsMpi(TRUE);
+  if(is_mpi)laswriteopener.setIsMpi(TRUE);
 
 
   int process_count = 1;
@@ -884,15 +884,33 @@ int main(int argc, char *argv[])
     strncpy(lasreader->header.generating_software, temp, 32);
     lasreader->header.generating_software[31] = '\0';
 
+
+    LASwriter* laswriter = 0;
     // open laswriter
 
-    LASwriter* laswriter = laswriteopener.open(&lasreader->header);
-
+    laswriter = laswriteopener.open(&lasreader->header);
     if (laswriter == 0)
     {
-      fprintf(stderr, "ERROR: could not open laswriter\n");
-      byebye(true, argc==1);
+         fprintf(stderr, "ERROR: could not open laswriter\n");
+         byebye(true, argc==1);
     }
+
+    if(is_mpi == 1){ // jdw, we do this because only rank 0 wrote the header in laswriter_las.cpp
+      MPI_File fh = laswriter->get_MPI_File();
+      MPI_Offset offset;
+            //MPI_File_get_position(fh, &offset);
+            //printf ("offset %lld, rank %i fh %lld\n", offset, rank, fh);
+      if(rank==0){
+           MPI_File_get_position(fh, &offset);
+      }
+      MPI_Bcast(&offset, 1, MPI_OFFSET, 0, MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_File_seek(fh, offset, MPI_SEEK_SET);
+
+    }
+
+
+
 
     // for piped output we need to re-open the input file
 
@@ -996,8 +1014,9 @@ int main(int argc, char *argv[])
 
       lasreader->seek(subsequence_start);
       if(is_mpi){
-/*
+
         MPI_File fh = laswriter->get_MPI_File();
+/*
         MPI_Info info;
         MPI_File_get_info(fh, &info);
         //MPI_Info_get( info, "access_style", 1024, value, &flag );
@@ -1017,22 +1036,20 @@ int main(int argc, char *argv[])
 
 
 
-   //     MPI_Offset cur = 0;
-
-
+       MPI_Offset cur = 0;
 
         // jdw, todo, remove the hardcoding by adding methods to read point size from reader?
-     //   MPI_File_seek(fh, write_point_offset*28, MPI_SEEK_CUR);
+       MPI_File_seek(fh, write_point_offset*28, MPI_SEEK_CUR);
 
-      //  MPI_File_get_position(fh, &cur);
+       MPI_File_get_position(fh, &cur);
 
 
 
 
       //else{
 
-	  FILE *file = laswriter->get_file();
-	  fseeko(file, (off_t)write_point_offset*28, SEEK_CUR);
+	  //FILE *file = laswriter->get_file();
+	  //fseeko(file, (off_t)write_point_offset*28, SEEK_CUR);
 
 	  if(debug) printf ("rank %i, write offset %u\n", rank, write_point_offset);
       //}
@@ -1114,7 +1131,7 @@ int main(int argc, char *argv[])
 
     	//  }
       }
-
+      laswriter->get_Stream()->flushBytes();
     }
 
     // without the extra pass we need to fix the header now

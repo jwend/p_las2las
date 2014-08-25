@@ -71,6 +71,10 @@ public:
   virtual BOOL putByte(U8 byte) = 0;
 /* write an array of bytes                                   */
   virtual BOOL putBytes(const U8* bytes, U32 num_bytes) = 0;
+/* jdw, flush the putBytes buffer to disk                    */
+  virtual BOOL putPointBytes(const U8* bytes, U32 num_bytes) {return TRUE;}
+/* jdw, flush the putBytes buffer to disk                    */
+  virtual BOOL flushBytes() {return TRUE; };
 /* write 16 bit low-endian field                             */
   virtual BOOL put16bitsLE(const U8* bytes) = 0;
 /* write 32 bit low-endian field                             */

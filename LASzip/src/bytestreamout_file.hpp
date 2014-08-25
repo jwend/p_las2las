@@ -52,6 +52,9 @@ public:
   BOOL putByte(U8 byte);
 /* write an array of bytes                                   */
   BOOL putBytes(const U8* bytes, U32 num_bytes);
+  BOOL putPointBytes(const U8* bytes, U32 num_bytes){ return putBytes(bytes, num_bytes); };
+/* jdw, does nothing, needed for mpi compatibility           */
+  BOOL flushBytes() {return TRUE;};
 /* is the stream seekable (e.g. standard out is not)         */
   BOOL isSeekable() const;
 /* get current position of stream                            */

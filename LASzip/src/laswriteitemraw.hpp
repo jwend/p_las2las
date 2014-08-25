@@ -43,7 +43,7 @@ public:
   LASwriteItemRaw_POINT10_LE(){};
   inline BOOL write(const U8* item)
   {
-    return outstream->putBytes(item, 20);
+    return outstream->putPointBytes(item, 20);
   };
 };
 
@@ -71,7 +71,7 @@ public:
   LASwriteItemRaw_GPSTIME11_LE() {};
   inline BOOL write(const U8* item)
   {
-    return outstream->putBytes(item, 8);
+    return outstream->putPointBytes(item, 8);
   };
 };
 
@@ -94,7 +94,7 @@ public:
   LASwriteItemRaw_RGB12_LE(){}
   inline BOOL write(const U8* item)
   {
-    return outstream->putBytes(item, 6);
+    return outstream->putPointBytes(item, 6);
   };
 };
 

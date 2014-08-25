@@ -56,6 +56,10 @@ public:
   BOOL putByte(U8 byte);
 /* write an array of bytes                                   */
   BOOL putBytes(const U8* bytes, U32 num_bytes);
+/* jdw                                                       */
+  BOOL putPointBytes(const U8* bytes, U32 num_bytes);
+/* jdw, flush the buffer to disk                             */
+  BOOL flushBytes();
 /* is the stream seekable (e.g. standard out is not)         */
   BOOL isSeekable() const;
 /* get current position of stream                            */
@@ -68,6 +72,8 @@ public:
   ~ByteStreamOutMPI(){};
 protected:
   MPI_File fh;
+  U8 *buf;
+  I32 buf_pos;
 };
 
 class ByteStreamOutMPILE : public ByteStreamOutMPI
@@ -108,11 +114,14 @@ public:
   BOOL put64bitsBE(const U8* bytes);
 private:
   U8 swapped[8];
+
 };
 
 inline ByteStreamOutMPI::ByteStreamOutMPI(MPI_File fh)
 {
   this->fh = fh;
+  buf = 0;
+  buf_pos = 0;
 }
 
 inline BOOL ByteStreamOutMPI::refile(MPI_File fh)
@@ -134,16 +143,76 @@ inline BOOL ByteStreamOutMPI::putByte(U8 byte)
 
 }
 
+
+
+inline BOOL ByteStreamOutMPI::putPointBytes(const U8* bytes, U32 num_bytes)
+{
+
+	int rtn = TRUE;
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  //return (fwrite(bytes, 1, num_bytes, file) == num_bytes);
+  if(buf == 0){
+	  buf_pos = 0;
+	  buf = (U8*) malloc(100000000);
+  }
+
+
+  if(buf_pos + num_bytes < 100000000){
+	  memcpy ( buf+buf_pos, bytes, num_bytes);
+      buf_pos += num_bytes;
+      return TRUE;
+  }
+  else{
+
+    MPI_Status status;
+    rtn = MPI_File_write(fh, (void *)buf, buf_pos, MPI_BYTE, &status);
+    printf ("putbytes wrote %i, rank %i\n", buf_pos, rank);
+    buf_pos = 0;
+	memcpy ( buf+buf_pos, bytes, num_bytes);
+    buf_pos += num_bytes;
+  }
+  if (rtn == MPI_SUCCESS)
+        return TRUE;
+  else
+        return FALSE;
+
+}
+
+
 inline BOOL ByteStreamOutMPI::putBytes(const U8* bytes, U32 num_bytes)
 {
-  //return (fwrite(bytes, 1, num_bytes, file) == num_bytes);
-  MPI_Status status;
-  int rtn = MPI_File_write(fh, (void *)bytes, num_bytes, MPI_BYTE, &status);
-  if (rtn == MPI_SUCCESS)
-    return TRUE;
-  else
-    return FALSE;
+
+
+    MPI_Status status;
+    int rtn = MPI_File_write(fh, (void *)bytes, num_bytes, MPI_BYTE, &status);
+
+
+     if (rtn == MPI_SUCCESS)
+        return TRUE;
+     else
+        return FALSE;
+
 }
+
+
+
+
+inline BOOL ByteStreamOutMPI::flushBytes()
+{
+
+    MPI_Status status;
+    int rtn = MPI_File_write(fh, (void *)buf, buf_pos, MPI_BYTE, &status);
+
+    buf_pos = 0;
+    if (rtn == MPI_SUCCESS)
+            return TRUE;
+      else
+            return FALSE;
+
+}
+
 
 inline BOOL ByteStreamOutMPI::isSeekable() const
 {

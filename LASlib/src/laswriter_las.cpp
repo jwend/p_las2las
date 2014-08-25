@@ -111,7 +111,13 @@ BOOL LASwriterLAS::open(MPI_File fh, const LASheader* header, U32 compressor, I3
   else
     out = new ByteStreamOutMPIBE(fh);
 
-  return open(out, header, compressor, requested_version, chunk_size);
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+
+  //if(rank == 0){
+    return open(out, header, compressor, requested_version, chunk_size);
+  //}
+ // else return TRUE;
 }
 
 
@@ -237,10 +243,19 @@ BOOL LASwriterLAS::open(ByteStreamOut* stream, const LASheader* header, U32 comp
     }
   }
 
+
+
+
+
   // save the position where we start writing the header
 
   header_start_position = stream->tell();
 
+  int rank = 0;
+  if(fh != 0){
+     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  }
+  if(rank == 0){         // jdw, skip writing header for all but rank = 0 *******************************************
   // write header variable after variable (to avoid alignment issues)
 
   if (!stream->putBytes((U8*)&(header->file_signature), 4))
@@ -904,7 +919,7 @@ BOOL LASwriterLAS::open(ByteStreamOut* stream, const LASheader* header, U32 comp
       return FALSE;
     }
   }
-
+  } // jdw, if(fh==0) ***********************************************************************
   // initialize the point writer
 
   if (!writer->init(stream)) return FALSE;
