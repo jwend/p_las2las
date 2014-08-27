@@ -74,7 +74,7 @@ public:
 protected:
   virtual BOOL open(ByteStreamIn* stream);
   virtual BOOL read_point_default();
-
+  ByteStreamIn* get_Stream() {return stream;};
 private:
   FILE* file;
   MPI_File fh;

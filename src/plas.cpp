@@ -59,6 +59,7 @@
 #include <mpi.h>
 #include <math.h>
 #include "lasreader.hpp"
+#include "bytestreamin.hpp"
 #include "laswriter.hpp"
 #include "geoprojectionconverter.hpp"
 
@@ -851,7 +852,7 @@ int main(int argc, char *argv[])
 
      // if (verbose) { fprintf(stderr,"extra pass took %g sec.\n", taketime()-start_time); start_time = taketime(); }
 
-      if (verbose) fprintf(stderr, "piped output: reading %lld and writing %lld points ...\n", lasreader->npoints, lasinventory.number_of_point_records);
+      if (verbose) fprintf(stderr, "piped output: reading %lld and writing %d points ...\n", lasreader->npoints, lasinventory.number_of_point_records);
 
     }
     else
@@ -976,7 +977,17 @@ int main(int argc, char *argv[])
       subsequence_start = rank*process_points;
       subsequence_stop =  subsequence_start + process_points;
       if(rank == process_count-1) subsequence_stop += left_over_count;
-      lasreader->seek(subsequence_start);
+
+      //((LASreaderLAS*)lasreader)->stream->seek(subsequence_start);
+
+      I64 header_end_read_position = lasreader->get_Stream()->tell();
+
+      printf("header end %lld subseqence_start * 28 %lld rank %i\n", header_end_read_position, subsequence_start*28, rank);
+      lasreader->p_count = subsequence_start;
+      lasreader->get_Stream()->seek(header_end_read_position + subsequence_start*28);
+
+      printf("seek pos first loop %lld rank %i\n", lasreader->get_Stream()->tell(), rank);
+
 
       if (verbose) fprintf(stderr, "reading %lli points, rank %i\n", subsequence_stop - subsequence_start, rank);
 
@@ -1005,14 +1016,23 @@ int main(int argc, char *argv[])
 
       if(is_mpi)MPI_Barrier(MPI_COMM_WORLD);
 
-      U32 write_point_offset = 0;
+      I64 write_point_offset = 0;
       for (int k=0; k < rank; k++){
 	  write_point_offset += filtered_counts[k];
       }
 
 
 
-      lasreader->seek(subsequence_start);
+      //lasreader->seek(subsequence_start);
+      printf("header end %lld subseqence_start * 28 %lld rank %i\n", header_end_read_position, subsequence_start*28, rank);
+      lasreader->p_count = subsequence_start;
+      lasreader->get_Stream()->seek(header_end_read_position + subsequence_start*28);
+
+
+
+           printf("seek pos second loop %lld rank %i\n", lasreader->get_Stream()->tell(), rank);
+
+
       if(is_mpi){
 
         MPI_File fh = laswriter->get_MPI_File();
@@ -1051,17 +1071,26 @@ int main(int argc, char *argv[])
 	  //FILE *file = laswriter->get_file();
 	  //fseeko(file, (off_t)write_point_offset*28, SEEK_CUR);
 
-	  if(debug) printf ("rank %i, write offset %u\n", rank, write_point_offset);
+	  if(debug) printf ("rank %i, write offset %lld\n", rank, write_point_offset*28);
       //}
       }
       if(is_mpi)MPI_Barrier(MPI_COMM_WORLD);
 
 
+
+      if(debug) printf("number_of_point_records %d, rank %i\n", laswriter->inventory.number_of_point_records, rank);
+
+      for(int i =0; i< 8; i++){
+	  printf("myinventory %i %u rank %i\n", i, my_inventory.number_of_points_by_return[i], rank);
+      }
+
+
+
       // accumulate inventory in rank 0
 
       if (is_mpi){
-          I64 number_of_point_records = 0;
-          I64 number_of_points_by_return[8];
+          U32 number_of_point_records = 0;
+          U32 number_of_points_by_return[8];
           for(int i = 0; i<8; i++)number_of_points_by_return[i] = 0;
           I32 max_X = 0;
           I32 min_X = 0;
@@ -1070,15 +1099,14 @@ int main(int argc, char *argv[])
           I32 max_Z = 0;
           I32 min_Z = 0;
 
-          MPI_Reduce(&my_inventory.number_of_point_records, &number_of_point_records, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-          MPI_Reduce(&my_inventory.number_of_points_by_return, &number_of_points_by_return, 8, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+          MPI_Reduce(&my_inventory.number_of_point_records, &number_of_point_records, 1, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
+          MPI_Reduce(my_inventory.number_of_points_by_return, number_of_points_by_return, 8, MPI_UNSIGNED, MPI_SUM, 0, MPI_COMM_WORLD);
           MPI_Reduce(&my_inventory.max_X, &max_X, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
           MPI_Reduce(&my_inventory.min_X, &min_X, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
           MPI_Reduce(&my_inventory.max_Y, &max_Y, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
           MPI_Reduce(&my_inventory.min_Y, &min_Y, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
           MPI_Reduce(&my_inventory.max_Z, &max_Z, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
           MPI_Reduce(&my_inventory.min_Z, &min_Z, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
-
 
           if (rank ==0){
               my_inventory.number_of_point_records = number_of_point_records;
@@ -1096,7 +1124,9 @@ int main(int argc, char *argv[])
 
 
       laswriter->inventory = my_inventory;
-      if(debug) printf("number_of_point_records %lli, rank %i\n", laswriter->inventory.number_of_point_records, rank);
+
+
+
 
 
 
@@ -1120,7 +1150,8 @@ int main(int argc, char *argv[])
       //    geoprojectionconverter.to_target(lasreader->point.coordinates);
      //     lasreader->point.compute_XYZ(reproject_quantizer);
       //  }
-    	  laswriter->write_point(&lasreader->point);
+
+          laswriter->write_point(&lasreader->point);
 
 
 

@@ -115,7 +115,7 @@ public:
 
   LASreader();
   virtual ~LASreader();
-
+  virtual ByteStreamIn* get_Stream(){return 0;};
 protected:
   virtual BOOL read_point_default() = 0;
 

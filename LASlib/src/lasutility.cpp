@@ -43,7 +43,7 @@ LASinventory::LASinventory()
   //max_X = min_X = 0;
   //max_Y = min_Y = 0;
   //max_Z = min_Z = 0;
-
+  // jdw, needed so that mpi reduce operations will be correct on 0 point inventories
   max_X = max_Y = max_Z = INT_MIN;
   min_X = min_Y = min_Z = INT_MAX;
   first = TRUE;
