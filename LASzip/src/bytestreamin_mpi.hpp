@@ -120,12 +120,13 @@ inline U32 ByteStreamInMPI::getByte()
   //return (U32)byte;
   U32 byte;
   MPI_Status status;
+  int cnt;
   MPI_File_read(fh, &byte, 1, MPI_BYTE, &status);
-  if(status._ucount != 1){
-	  throw EOF;
+  MPI_Get_count(&status, MPI_BYTE, &cnt);
+  if(cnt != 1){
+      throw EOF;
   }
   return byte;
-
 }
 
 inline void ByteStreamInMPI::getBytes(U8* bytes, const U32 num_bytes)
@@ -136,8 +137,10 @@ inline void ByteStreamInMPI::getBytes(U8* bytes, const U32 num_bytes)
 //  }
 
 	MPI_Status status;
+	int cnt;
 	MPI_File_read(fh, bytes, num_bytes, MPI_BYTE, &status);
-	if(status._ucount != num_bytes){
+	MPI_Get_count(&status, MPI_BYTE, &cnt);
+	if(cnt != num_bytes){
 		throw EOF;
 	}
 }

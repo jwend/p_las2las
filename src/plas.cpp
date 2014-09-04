@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 {
   int i;
   int is_mpi = 1;
-  int debug = 1;
+  int debug = 0;
   bool verbose = false;
   bool force = false;
   // fixed header changes 
@@ -895,12 +895,12 @@ int main(int argc, char *argv[])
          fprintf(stderr, "ERROR: could not open laswriter\n");
          byebye(true, argc==1);
     }
-
-    if(is_mpi == 1){ // jdw, we do this because only rank 0 wrote the header in laswriter_las.cpp
+    // **************************************************************************************************
+    if(is_mpi == 1){ // jdw, we do this because only rank 0 now writes the header in laswriter_las.cpp
       MPI_File fh = laswriter->get_MPI_File();
       MPI_Offset offset;
-            //MPI_File_get_position(fh, &offset);
-            //printf ("offset %lld, rank %i fh %lld\n", offset, rank, fh);
+      //MPI_File_get_position(fh, &offset);
+      //printf ("offset %lld, rank %i fh %lld\n", offset, rank, fh);
       if(rank==0){
            MPI_File_get_position(fh, &offset);
       }
@@ -909,7 +909,7 @@ int main(int argc, char *argv[])
       MPI_File_seek(fh, offset, MPI_SEEK_SET);
 
     }
-
+    // ****************************************************************************************************
 
 
 
@@ -971,48 +971,47 @@ int main(int argc, char *argv[])
     else // ***************************** MPI ********************************************************
     {
 
-
+      // ***** Determine the start and stop points for this process *****
       I64 left_over_count = lasreader->npoints % process_count;
       I64 process_points = lasreader->npoints / process_count;
       subsequence_start = rank*process_points;
       subsequence_stop =  subsequence_start + process_points;
       if(rank == process_count-1) subsequence_stop += left_over_count;
 
+      // ***** Set the input stream file offset for this process *****
+      // parameter gets cast to U32 in the implementation of seek and overflows for large files
+      // manually set the file offset instead for now
       //((LASreaderLAS*)lasreader)->stream->seek(subsequence_start);
-
       I64 header_end_read_position = lasreader->get_Stream()->tell();
-
-      printf("header end %lld subseqence_start * 28 %lld rank %i\n", header_end_read_position, subsequence_start*28, rank);
+      //printf("header end %lld subseqence_start * 28 %lld rank %i\n", header_end_read_position, subsequence_start*28, rank);
       lasreader->p_count = subsequence_start;
       lasreader->get_Stream()->seek(header_end_read_position + subsequence_start*28);
-
-      printf("seek pos first loop %lld rank %i\n", lasreader->get_Stream()->tell(), rank);
+      //printf("seek pos first loop %lld rank %i\n", lasreader->get_Stream()->tell(), rank);
 
 
       if (verbose) fprintf(stderr, "reading %lli points, rank %i\n", subsequence_stop - subsequence_start, rank);
 
+      // *****Read the file for the first time *****
+      // this first read of the file is primarily to gather a count of points that pass the filter so that
+      // write offsets can be set. Using the LASInvetory.add method accomplishes this, plus it gathers some
+      // return counts and min/maxes so we can update the header later.
 
-      I64 filtered_count = 0;
-      I64* filtered_counts = (I64*)malloc(process_count * sizeof(I64));
       LASinventory my_inventory;
-
       while (lasreader->read_point()){
 	  if (lasreader->p_count > subsequence_stop) break;
 	  my_inventory.add(&lasreader->point);
       }
+
+      // ***** Gather and set the write offset for this process *****
+      I64 filtered_count = 0;
+      I64* filtered_counts = (I64*)malloc(process_count * sizeof(I64));
       filtered_count = my_inventory.number_of_point_records;
-
-
       if(is_mpi)MPI_Barrier(MPI_COMM_WORLD);
-
       filtered_counts[rank] = filtered_count;
       if(is_mpi)MPI_Allgather(&filtered_count, 1, MPI_LONG_LONG, filtered_counts, 1, MPI_LONG_LONG, MPI_COMM_WORLD);
-
       if(is_mpi)MPI_Barrier(MPI_COMM_WORLD);
 
-      //for(int k =0; k< process_count; k++){
       if(debug) printf("filtered count %lli rank %i, my_invetory.minZ %i\n", filtered_counts[rank], rank, my_inventory.min_Z);
-      //}
 
       if(is_mpi)MPI_Barrier(MPI_COMM_WORLD);
 
@@ -1020,73 +1019,21 @@ int main(int argc, char *argv[])
       for (int k=0; k < rank; k++){
 	  write_point_offset += filtered_counts[k];
       }
-
-
-
-      //lasreader->seek(subsequence_start);
-      printf("header end %lld subseqence_start * 28 %lld rank %i\n", header_end_read_position, subsequence_start*28, rank);
-      lasreader->p_count = subsequence_start;
-      lasreader->get_Stream()->seek(header_end_read_position + subsequence_start*28);
-
-
-
-           printf("seek pos second loop %lld rank %i\n", lasreader->get_Stream()->tell(), rank);
-
-
       if(is_mpi){
 
         MPI_File fh = laswriter->get_MPI_File();
-/*
-        MPI_Info info;
-        MPI_File_get_info(fh, &info);
-        //MPI_Info_get( info, "access_style", 1024, value, &flag );
-        int nkeys;
-        MPI_Info_get_nkeys(info, &nkeys);
-        printf("number of keys in info %i\n", nkeys);
-        for(int i=0; i<nkeys; i++){
-            char key[256];
-            MPI_Info_get_nthkey(info, i, key);
-            printf("  key = %s\n", key);
-            int valuelen, flag;
-            char value[256];
-            MPI_Info_get(info, key, 256, value, &flag);
-            printf("  value = %s\n", value);
-        }
-*/
-
-
-
-       MPI_Offset cur = 0;
+        MPI_Offset cur = 0;
 
         // jdw, todo, remove the hardcoding by adding methods to read point size from reader?
-       MPI_File_seek(fh, write_point_offset*28, MPI_SEEK_CUR);
+        MPI_File_seek(fh, write_point_offset*28, MPI_SEEK_CUR);
 
-       MPI_File_get_position(fh, &cur);
+        MPI_File_get_position(fh, &cur);
+	if(debug) printf ("rank %i, write offset %lld\n", rank, write_point_offset*28);
 
-
-
-
-      //else{
-
-	  //FILE *file = laswriter->get_file();
-	  //fseeko(file, (off_t)write_point_offset*28, SEEK_CUR);
-
-	  if(debug) printf ("rank %i, write offset %lld\n", rank, write_point_offset*28);
-      //}
       }
       if(is_mpi)MPI_Barrier(MPI_COMM_WORLD);
 
-
-
-      if(debug) printf("number_of_point_records %d, rank %i\n", laswriter->inventory.number_of_point_records, rank);
-
-      for(int i =0; i< 8; i++){
-	  printf("myinventory %i %u rank %i\n", i, my_inventory.number_of_points_by_return[i], rank);
-      }
-
-
-
-      // accumulate inventory in rank 0
+      // ***** Reduce inventory information in rank 0 *****
 
       if (is_mpi){
           U32 number_of_point_records = 0;
@@ -1118,57 +1065,48 @@ int main(int argc, char *argv[])
               my_inventory.max_Z = max_Z;
               my_inventory.min_Z = min_Z;
           }
-        }
-
-
-
-
+      }
       laswriter->inventory = my_inventory;
 
-
-
-
-
-
-
+      // ***** Read and filter the input file again, this time write the filtered point since output file offset in now known amd set *****
+      //lasreader->seek(subsequence_start); // parameter gets cast to U32 in the implementation and overflows for large files
+      // manually set the file offset instead for now
+      //printf("header end %lld subseqence_start * 28 %lld rank %i\n", header_end_read_position, subsequence_start*28, rank);
+      lasreader->p_count = subsequence_start;
+      lasreader->get_Stream()->seek(header_end_read_position + subsequence_start*28);
+      //printf("seek pos second loop %lld rank %i\n", lasreader->get_Stream()->tell(), rank);
       while (lasreader->read_point())
       {
-
            if (lasreader->p_count > subsequence_stop) break;
+           /*
+           if (clip_to_bounding_box)
+           {
+             if (!lasreader->point.inside_box(lasreader->header.min_x, lasreader->header.min_y, lasreader->header.min_z, lasreader->header.max_x, lasreader->header.max_y, lasreader->header.max_z))
+             {
+               continue;
+             }
+          }
 
-       // if (clip_to_bounding_box)
-      //  {
-      //    if (!lasreader->point.inside_box(lasreader->header.min_x, lasreader->header.min_y, lasreader->header.min_z, lasreader->header.max_x, lasreader->header.max_y, lasreader->header.max_z))
-      //    {
-      //      continue;
-     //     }
-     //   }
-
-      //  if (reproject_quantizer)
-    //    {
-     //     lasreader->point.compute_coordinates();
-      //    geoprojectionconverter.to_target(lasreader->point.coordinates);
-     //     lasreader->point.compute_XYZ(reproject_quantizer);
-      //  }
-
+          if (reproject_quantizer)
+          {
+            lasreader->point.compute_coordinates();
+            geoprojectionconverter.to_target(lasreader->point.coordinates);
+            lasreader->point.compute_XYZ(reproject_quantizer);
+          }
+          */
           laswriter->write_point(&lasreader->point);
-
-
-
-    	// jdw, this is done above
-        // without extra pass we need inventory of surviving points
-    	//  if (!extra_pass){
-        //	laswriter->update_inventory(&lasreader->point);
-
-    	//  }
+    	  // jdw, inventory work is done in first read of file ...
+          // without extra pass we need inventory of surviving points
+    	  // if (!extra_pass){
+          //   laswriter->update_inventory(&lasreader->point);
+    	  // }
       }
+      //***** this is part of an mpi write optimization *****
       laswriter->get_Stream()->flushBytes();
     }
 
     // without the extra pass we need to fix the header now
-    // do the mpi inventory reconciliation
-
-
+    // ***** do the inventory reconciliation *****
     if(rank == 0){
 
       if (!extra_pass)
