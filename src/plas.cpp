@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 {
   int i;
   int is_mpi = 1;
-  int debug = 1;
+  int debug = 0;
   bool verbose = false;
   bool force = false;
   // fixed header changes 

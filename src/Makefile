@@ -15,11 +15,13 @@ LASLIBS     = -L../LASlib/lib
 LASINCLUDE  = -I../LASlib/zip/src -I../LASlib/inc 
 
 #all: laszip lasinfo lasprecision las2txt txt2las las2las lasdiff lasmerge lasindex
-all: plas
+all: plas lasinfo
 
 plas: plas.o geoprojectionconverter.o ../LASlib/lib/liblas.a
 	${LINKER} ${BITS} ${COPTS} plas.o geoprojectionconverter.o -llas -o $@ ${LIBS} ${LASLIBS} $(INCLUDE) $(LASINCLUDE)
 	cp $@ ../bin
+	cp $@ p_las2las
+	cp $@ ../bin/p_las2las
 
 laszip: laszip.o geoprojectionconverter.o 
 	${LINKER} ${BITS} ${COPTS} laszip.o geoprojectionconverter.o -llas -o $@ ${LIBS} ${LASLIBS} $(INCLUDE) $(LASINCLUDE)
@@ -65,9 +67,9 @@ lasindex: lasindex.o
 
 clean:
 	rm -rf *.o
-	rm -rf laszip lasinfo lasprecision las2txt txt2las las2las lasdiff lasmerge lasindex
+	rm -rf laszip lasinfo lasprecision las2txt txt2las las2las lasdiff lasmerge lasindex plas p_las2las
 
 clobber:
 	rm -rf *.o
-	rm -rf laszip lasinfo lasprecision las2txt txt2las las2las lasdiff lasmerge lasindex
+	rm -rf laszip lasinfo lasprecision las2txt txt2las las2las lasdiff lasmerge lasindex plas p_las2las
 
