@@ -140,7 +140,7 @@ inline void ByteStreamInMPI::getBytes(U8* bytes, const U32 num_bytes)
 	int cnt;
 	MPI_File_read(fh, bytes, num_bytes, MPI_BYTE, &status);
 	MPI_Get_count(&status, MPI_BYTE, &cnt);
-	if(cnt != num_bytes){
+	if((U8)cnt != num_bytes){
 		throw EOF;
 	}
 }

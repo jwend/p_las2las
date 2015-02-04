@@ -104,15 +104,15 @@ public:
   LASwaveform13writer* open_waveform13(const LASheader* lasheader);
   LASwriteOpener();
   ~LASwriteOpener();
-
-	int getIsMpi() const {
-		return is_mpi;
-	}
-
-	void setIsMpi(int isMpi) {
-		is_mpi = isMpi;
-	}
-
+  int getIsMpi() const {
+    return is_mpi;
+  }
+  void setIsMpi(int isMpi) {
+    is_mpi = isMpi;
+  }
+  CHAR* get_file_name(){
+    return file_name;
+  }
 private:
   int is_mpi;
   void add_directory(const CHAR* directory=0);

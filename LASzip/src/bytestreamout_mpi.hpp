@@ -168,7 +168,7 @@ inline BOOL ByteStreamOutMPI::putPointBytes(const U8* bytes, U32 num_bytes)
 
     MPI_Status status;
     rtn = MPI_File_write(fh, (void *)buf, buf_pos, MPI_BYTE, &status);
-    printf ("putbytes wrote %i, rank %i\n", buf_pos, rank);
+    //printf ("putbytes wrote %i, rank %i\n", buf_pos, rank);
     buf_pos = 0;
 	memcpy ( buf+buf_pos, bytes, num_bytes);
     buf_pos += num_bytes;
