@@ -1,15 +1,17 @@
 # makefile for LGPL-licensed LAStools
 #
 #COPTS    = -g -Wall -Wno-deprecated -DDEBUG 
+
 COPTS     = -O3 -Wall -Wno-deprecated -Wno-write-strings -Wno-strict-aliasing -Wno-unused-but-set-variable -Wno-unused-result -DNDEBUG 
 #COMPILER  = CC
-COMPILER  = mpiCC
-LINKER  = mpiCC
+COMPILER  = mpic++
+LINKER  = mpic++
 #BITS     = -64
 
 #LIBS     = -L/usr/lib64
 #LIBS     = -L/usr/lib32
 #INCLUDE  = -I/usr/include
+INCLUDE = 
 
 LASLIBS     = -L../LASlib/lib
 LASINCLUDE  = -I../LASlib/zip/src -I../LASlib/inc 
