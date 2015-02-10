@@ -4,8 +4,8 @@
 
 COPTS     = -O3 -Wall -Wno-deprecated -Wno-write-strings -Wno-strict-aliasing -Wno-unused-but-set-variable -Wno-unused-result -DNDEBUG 
 #COMPILER  = CC
-COMPILER  = mpic++
-LINKER  = mpic++
+COMPILER ?= mpic++
+LINKER ?= mpic++
 #BITS     = -64
 
 #LIBS     = -L/usr/lib64

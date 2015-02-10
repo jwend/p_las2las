@@ -3,7 +3,7 @@
 #COPTS    = -g -Wall
 COPTS     = -O3 -Wall -Wno-deprecated -Wno-strict-aliasing -Wno-unused-but-set-variable -Wno-unused-result -DNDEBUG -DUNORDERED
 #COPTS  = -O3 -Wno-deprecated
-COMPILER  = mpic++
+COMPILER  ?= mpic++
 AR  = ar rc
 #BITS     = -64
 

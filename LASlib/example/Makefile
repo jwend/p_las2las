@@ -2,8 +2,8 @@
 #
 #COPTS    = -g -Wall
 COPTS     = -O3 -Wno-unused-result
-COMPILER  = mpic++
-LINKER  = mpic++
+COMPILER  ?= mpic++
+LINKER  ?= mpic++
 #BITS     = -64
 
 #LIBS     = -L/usr/lib32
