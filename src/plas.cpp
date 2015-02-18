@@ -1002,15 +1002,15 @@ int main(int argc, char *argv[])
       // this first read and filter of the file is to gather a count of points that pass the filter so that
       // write offsets can be set.
       I64 filtered_count = 0;
-      while (lasreader->read_point()){
-	  if (lasreader->p_count > subsequence_stop) break;
-	  if (clip_to_bounding_box){
-	    if (!lasreader->point.inside_box(lasreader->header.min_x, lasreader->header.min_y, lasreader->header.min_z, lasreader->header.max_x, lasreader->header.max_y, lasreader->header.max_z)){
-	      continue;
-	    }
-	  }
-	  filtered_count++;
+      //while (lasreader->read_point()){
+
+      lasreader->MPI_END_POINT = subsequence_stop;
+      while (lasreader->read_point())
+      {
+          filtered_count++;
       }
+
+
       // ***** Gather and set the write offset for this process *****
       I64* filtered_counts = (I64*)malloc(process_count * sizeof(I64));
       if(is_mpi)MPI_Barrier(MPI_COMM_WORLD);
@@ -1048,17 +1048,19 @@ int main(int argc, char *argv[])
       lasreader->p_count = subsequence_start;
       lasreader->get_Stream()->seek(header_end_read_position + subsequence_start*28);
       //printf("seek pos second loop %lld rank %i\n", lasreader->get_Stream()->tell(), rank);
+
+      lasreader->MPI_END_POINT = subsequence_stop;
       while (lasreader->read_point())
       {
-          if (lasreader->p_count > subsequence_stop) break;
+          //if (lasreader->p_count > subsequence_stop) break;
 
-          if (clip_to_bounding_box)
-          {
-            if (!lasreader->point.inside_box(lasreader->header.min_x, lasreader->header.min_y, lasreader->header.min_z, lasreader->header.max_x, lasreader->header.max_y, lasreader->header.max_z))
-            {
-              continue;
-            }
-          }
+          //if (clip_to_bounding_box)
+          //{
+          //  if (!lasreader->point.inside_box(lasreader->header.min_x, lasreader->header.min_y, lasreader->header.min_z, lasreader->header.max_x, lasreader->header.max_y, lasreader->header.max_z))
+          //  {
+          //    continue;
+          //  }
+         // }
 
           if (reproject_quantizer)
           {

@@ -1319,7 +1319,9 @@ BOOL LASreaderLAS::seek(const I64 p_index)
 
 BOOL LASreaderLAS::read_point_default()
 {
-  if (p_count < npoints)
+  I64 end = MPI_END_POINT<npoints?MPI_END_POINT:npoints;
+
+  if (p_count < end)
   {
     if (reader->read(point.point) == FALSE)
     {

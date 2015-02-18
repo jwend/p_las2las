@@ -788,6 +788,7 @@ public:
 
   BOOL inside_rectangle(const F64 r_min_x, const F64 r_min_y, const F64 r_max_x, const F64 r_max_y) const
   {
+
     F64 xy;
     xy = get_x();
     if (xy < r_min_x || xy >= r_max_x) return FALSE;

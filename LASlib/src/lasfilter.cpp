@@ -66,7 +66,7 @@ class LAScriterionKeepxyz : public LAScriterion
 public:
   inline const CHAR* name() const { return "keep_xyz"; };
   inline I32 get_command(CHAR* string) const { return sprintf(string, "-%s %g %g %g %g %g %g ", name(), min_x, min_y, min_z, max_x, max_y, max_z); };
-  inline BOOL filter(const LASpoint* point) { return (!point->inside_box(min_x, min_y, min_z, max_x, max_y, max_z)); };
+  inline BOOL filter(const LASpoint* point) { return (!point->inside_box(min_x, min_y, min_z, max_x, max_y, max_z));};
   LAScriterionKeepxyz(F64 min_x, F64 min_y, F64 min_z, F64 max_x, F64 max_y, F64 max_z) { this->min_x = min_x; this->min_y = min_y; this->min_z = min_z; this->max_x = max_x; this->max_y = max_y; this->max_z = max_z; };
 private:
   F64 min_x, min_y, min_z, max_x, max_y, max_z;

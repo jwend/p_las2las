@@ -86,6 +86,7 @@ public:
   inline F64 get_r_max_y() const { return r_max_y; };
 
   virtual BOOL seek(const I64 p_index) = 0;
+  I64 MPI_END_POINT;
   BOOL read_point() { return (this->*read_simple)(); };
 
   inline void compute_coordinates() { point.compute_coordinates(); };
