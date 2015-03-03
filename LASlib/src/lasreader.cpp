@@ -48,10 +48,11 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 LASreader::LASreader()
 {
-
+  MPI_END_POINT = LLONG_MAX;
   my_count = 0;
   npoints = 0;
   p_count = 0;
