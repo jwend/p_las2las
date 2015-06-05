@@ -1,7 +1,7 @@
 # makefile for laszippertest
 #
 #COPTS		= -g -Wall
-COPTS		= -O3 -Wall
+COPTS		= -O2 -Wall
 COMPILER	= g++
 LINKER		= g++
 #BITS		= -64

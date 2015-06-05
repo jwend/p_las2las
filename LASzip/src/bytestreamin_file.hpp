@@ -62,6 +62,11 @@ public:
   ~ByteStreamInFile(){};
 protected:
   FILE* file;
+
+  U8 *buf;
+  I32 buf_pos;
+  I32 buf_sz;
+  I32 buf_read;
 };
 
 class ByteStreamInFileLE : public ByteStreamInFile
@@ -107,24 +112,52 @@ private:
 inline ByteStreamInFile::ByteStreamInFile(FILE* file)
 {
   this->file = file;
+  buf = (U8 *)malloc(4194304);
+  buf_pos = 0;
+  buf_sz = 4194304;
+  buf_read = 0;
 }
 
 inline U32 ByteStreamInFile::getByte()
 {
-  int byte = getc(file);
-  if (byte == EOF)
-  {
-    throw EOF;
-  }
-  return (U32)byte;
+  //if(buf_pos == buf_read){
+  //    buf_read = fread(buf, 1, buf_sz, file);
+  //    buf_pos = 0;
+  //    if(buf_read == 0) throw EOF;
+  //}
+  //return (U32) buf[buf_pos++];
+
+  //int byte = getc(file);
+  //if (byte == EOF)
+  //{
+  //  throw EOF;
+  //}
+  //return (U32)byte;
+  U8 c;
+  getBytes(&c,1);
+  return c;
+
+
 }
 
 inline void ByteStreamInFile::getBytes(U8* bytes, const U32 num_bytes)
 {
-  if (fread(bytes, 1, num_bytes, file) != num_bytes)
-  {
-    throw EOF;
-  }
+    if(buf_pos + ((I32)num_bytes) >  buf_read)
+    {
+          fseeko(file, ftello(file) - (buf_read - buf_pos), SEEK_SET);
+
+          buf_read = fread(buf, 1, buf_sz, file);
+          buf_pos = 0;
+          if(buf_read == 0) throw EOF;
+    }
+    memcpy(bytes, buf+buf_pos, num_bytes);
+    buf_pos += num_bytes;
+
+
+  //if (fread(bytes, 1, num_bytes, file) != num_bytes)
+  //{
+  //  throw EOF;
+  //}
 }
 
 inline BOOL ByteStreamInFile::isSeekable() const
@@ -139,12 +172,15 @@ inline I64 ByteStreamInFile::tell() const
 #elif defined (__MINGW32__)
   return (I64)ftello64(file);
 #else
-  return (I64)ftello(file);
+  return (I64)ftello(file) - (buf_read - buf_pos);
 #endif
 }
 
 inline BOOL ByteStreamInFile::seek(const I64 position)
 {
+
+  buf_pos =0;
+  buf_read=0;
   if (tell() != position)
   {
 #if defined _WIN32 && ! defined (__MINGW32__)
@@ -152,7 +188,10 @@ inline BOOL ByteStreamInFile::seek(const I64 position)
 #elif defined (__MINGW32__)
     return !(fseeko64(file, (off_t)position, SEEK_SET));
 #else
+
+
     return !(fseeko(file, (off_t)position, SEEK_SET));
+
 #endif
   }
   return TRUE;

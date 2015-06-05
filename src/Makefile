@@ -2,7 +2,7 @@
 #
 #COPTS    = -g -Wall -Wno-deprecated -DDEBUG 
 
-COPTS     = -O3 -Wall -Wno-deprecated -Wno-write-strings -Wno-strict-aliasing -Wno-unused-but-set-variable -Wno-unused-result -DNDEBUG 
+COPTS     = -O2 -Wall -Wno-deprecated -Wno-write-strings -Wno-strict-aliasing -Wno-unused-but-set-variable -Wno-unused-result -DNDEBUG 
 #COMPILER  = CC
 COMPILER ?= mpic++
 LINKER ?= mpic++

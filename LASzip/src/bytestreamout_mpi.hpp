@@ -155,12 +155,12 @@ inline BOOL ByteStreamOutMPI::putPointBytes(const U8* bytes, U32 num_bytes)
   //return (fwrite(bytes, 1, num_bytes, file) == num_bytes);
   if(buf == 0){
 	  buf_pos = 0;
-	  buf = (U8*) malloc(100000000);
+	  buf = (U8*) malloc(4194304);
   }
 
 
-  if(buf_pos + num_bytes < 100000000){
-	  memcpy ( buf+buf_pos, bytes, num_bytes);
+  if(buf_pos + num_bytes < 4194304){
+      memcpy ( buf+buf_pos, bytes, num_bytes);
       buf_pos += num_bytes;
       return TRUE;
   }
@@ -170,7 +170,7 @@ inline BOOL ByteStreamOutMPI::putPointBytes(const U8* bytes, U32 num_bytes)
     rtn = MPI_File_write(fh, (void *)buf, buf_pos, MPI_BYTE, &status);
     //printf ("putbytes wrote %i, rank %i\n", buf_pos, rank);
     buf_pos = 0;
-	memcpy ( buf+buf_pos, bytes, num_bytes);
+    memcpy ( buf+buf_pos, bytes, num_bytes);
     buf_pos += num_bytes;
   }
   if (rtn == MPI_SUCCESS)

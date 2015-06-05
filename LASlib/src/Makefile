@@ -1,7 +1,7 @@
 # makefile for liblas.a
 #
 #COPTS    = -g -Wall
-COPTS     = -O3 -Wall -Wno-deprecated -Wno-strict-aliasing -Wno-unused-but-set-variable -Wno-unused-result -DNDEBUG -DUNORDERED
+COPTS     = -O2 -Wall -Wno-deprecated -Wno-strict-aliasing -Wno-unused-but-set-variable -Wno-unused-result -DNDEBUG -DUNORDERED
 #COPTS  = -O3 -Wno-deprecated
 COMPILER  ?= mpic++
 AR  = ar rc
