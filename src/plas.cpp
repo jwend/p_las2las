@@ -992,10 +992,10 @@ int main(int argc, char *argv[])
       I64 header_end_read_position = lasreader->get_Stream()->tell();
 
 
-      printf("header end %lld subseqence_start * 28 %lld rank %i\n", header_end_read_position, subsequence_start*28, rank);
+      //printf("header end %lld subseqence_start * 28 %lld rank %i\n", header_end_read_position, subsequence_start*28, rank);
       lasreader->p_count = subsequence_start;
       lasreader->get_Stream()->seek(header_end_read_position + subsequence_start*28);
-      printf("seek pos first loop %lld rank %i\n", lasreader->get_Stream()->tell(), rank);
+      //printf("seek pos first loop %lld rank %i\n", lasreader->get_Stream()->tell(), rank);
 
 
       if (verbose) fprintf(stderr, "reading %lli points, rank %i\n", subsequence_stop - subsequence_start, rank);
@@ -1049,7 +1049,7 @@ int main(int argc, char *argv[])
       //printf("header end %lld subseqence_start * 28 %lld rank %i\n", header_end_read_position, subsequence_start*28, rank);
       lasreader->p_count = subsequence_start;
       lasreader->get_Stream()->seek(header_end_read_position + subsequence_start*28);
-      printf("seek pos second loop %lld rank %i\n", lasreader->get_Stream()->tell(), rank);
+      //printf("seek pos second loop %lld rank %i\n", lasreader->get_Stream()->tell(), rank);
 
       lasreader->MPI_END_POINT = subsequence_stop;
       while (lasreader->read_point())
