@@ -17,14 +17,12 @@ LASLIBS     = -L../LASlib/lib
 LASINCLUDE  = -I../LASlib/zip/src -I../LASlib/inc 
 
 #all: laszip lasinfo lasprecision las2txt txt2las las2las lasdiff lasmerge lasindex
-all: plas lasinfo
+all: p_las2las
 
-plas: plas.o geoprojectionconverter.o ../LASlib/lib/liblas.a
+p_las2las: plas.o geoprojectionconverter.o ../LASlib/lib/liblas.a
 	${LINKER} ${BITS} ${COPTS} plas.o geoprojectionconverter.o -llas -o $@ ${LIBS} ${LASLIBS} $(INCLUDE) $(LASINCLUDE)
 	mkdir -p ../bin	
 	cp $@ ../bin
-	cp $@ p_las2las
-	cp $@ ../bin/p_las2las
 
 laszip: laszip.o geoprojectionconverter.o 
 	${LINKER} ${BITS} ${COPTS} laszip.o geoprojectionconverter.o -llas -o $@ ${LIBS} ${LASLIBS} $(INCLUDE) $(LASINCLUDE)
