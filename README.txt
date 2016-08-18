@@ -1,65 +1,34 @@
-LAStools - award-winning software for efficient LiDAR processing (with LASzip)
+﻿p_las2las 
 
-You find the individual LAStools in the .\lastools\bin directory. Start
-them by double-clicking or run them in the DOS command line. The ArcGIS
-toolbox can be found in the .\lastools\ArcGIS_toolbox directory.
+Background:
 
-compant page:    http://rapidlasso.com
-latest updates:  http://lastools.org
-user group:      http://groups.google.com/group/lastools
-twitter feed:    http://twitter.com/lastools
-facebook page:   http://facebook.com/lastools
-linkedin group:  http://linkedin.com/groups?gid=4408378
+The LAStools las2las application and supporting LASlib library were extended with the MPI to allow the application to be run in parallel on a compute cluster. The goal was an application that would scale to arbitrarily large input, limited only by the amount of disk space needed to store the input and output file. No intermediate files are generated and individual process memory needs are not determined by the size of the input or output.
 
-* lastool.exe is a combined GUI for multiple LAStools (each tool has its own GUI)
+The algorithm_and_test_results.pdf slide presentation and lidar_parallel_processing.pdf paper contain a description of the implementation and test results on large LAS files run on the Stampede cluster at the University of Texas-Austin. 
 
-* lasground.exe extracts the bare-earth by classifying all ground points
-* lasoverlap.exe checks overlap & vertical/horizontal alignment of flight lines
-* lascontrol.exe quality checks elevations for a list of control points 
-* lasclassify.exe finds buildings and the vegetation above the ground
-* lascolor.exe colors the LAS points based on ortho imagery in TIF format 
-* lasgrid.exe grids onto min/max/avg/std elevation, intensity, or density rasters
-* lascanopy.exe computes basic raster metrics for forestry applications
-* lasboundary.exe extracts a boundary polygon that encloses the points
-* lasheight.exe computes for each point its height above the ground
-* lasclip.exe clips points against building footprints / swath boundaries
-* lastile.exe tiles huge amounts of LAS points into square tiles
-* laszip.exe compresses the LAS files in a completely lossless manner
-* lasinfo.exe prints out a quick overview of the contents of a LAS file
-* lasindex.exe creates a spatial index LAX file for fast spatial queries
-* txt2las.exe converts LIDAR data from ASCII text to binary LAS format
-* las2txt.exe turns LAS into human-readable and easy-to-parse ASCII
-* lasmerge.exe merges several LAS files into one
-* lassplit.exe splits points of one (or many) LAS files into flight lines
-* lassort.exe sorts points by gps_time, point_source, or into spatial proximity
-* las2las.exe extracts last returns, clips, subsamples, translates, etc ...
-* lasduplicate.exe removes duplicate points (with identical x and y, z optional) 
-* lasthin.exe thins lowest / highest / random LAS points via a grid
-* las2tin.exe triangulates the points of a LAS file into a TIN
-* las2dem.exe rasters (via a TIN) into elevation/slope/intensity/rgb DEMs
-* las2iso.exe extracts, optionally simplified, elevation contours
-* lasview.exe visualizes a LAS file with a simple OpenGL viewer
-* lasprecision.exe analyses the actual precision of the LIDAR points
-* las2shp.exe turns binary LAS into ESRI's Shapefile format
-* shp2las.exe turns an ESRI's Shapefile into binary LAS
+Dependencies:
+An MPI implementation must be installed. OpenMPI 1.6 and 1.8 are known to work and were used in development and testing.  mpic++ must be found in your PATH. 
 
-* blast2dem.exe rasters like las2dem but with streaming TINs for billions of points. 
+Install:
 
-For Windows all binaries are included. They can also be compiled from the
-source code and you can find the MSVC6.0 project files there as well. For
-Linux the makefiles and many sources are included. Simply go into the root
-directory and run 'make':
-
-unzip lastools.zip
-cd lastools/
+git clone https://github.com/jwend/p_las2las
+cd p_las2las
 make
 
-The compiled binary executables are or will be in the ./lastools/bin directory.
+The p_las2las executable is in the bin directory.
 
----
+Test:
 
-Please read the "LICENSE.txt" file for information on the legal use and licensing
-of LAStools. I would also really like it if you would send me an email and tell me
-what you use LAStools for and what features and improvements you could need. 
+mpirun -n 4 bin/p_las2las -i data/test.las -o out.las -keep_class 2 -verbose
 
-(c) 2007-2014 martin.isenburg@rapidlasso.com - http://rapidlasso.com
+Limitations and Supported Features:
+
+p_las2las works only with LAS version 1.0, 1.1, and 1.2 and produces only corresponding LAS file output. Version 1.2 was tested most extensively with up to the 117 GB file size input. Most filters and re projection flags should work with -keep_return, -keep_class, -keep_xy, -epsg, -target_longlat tested most extensively. For example here is a run command on a cluster with a 111GB LAS 1.2 file over the Denver area:
+
+mpirun -n 1024 ./p_las2las -i denver.las -o denver_clip_rtn1_r.las  -keep_xy 510000 4396000 516000 4404000 -keep_return 1 -epsg 26913 -target_longlat -verbose
+
+
+
+
+
+
